@@ -20,18 +20,22 @@ const pack = findFile('package.json');
 
 const readGit = (filename) => {
     if (!root) {
-        throw 'no git repository root found';
+        return undefined;
     }
 
     return readFile(join(root, filename), 'utf8');
 }
 
 export const getCommit = async () => {
-    return (await readGit('.git/logs/HEAD'))
-            ?.split('\n')
-            ?.filter(String)
-            ?.pop()
-            ?.split(' ')[1];
+    try {
+        return (await readGit('.git/logs/HEAD'))
+                ?.split('\n')
+                ?.filter(String)
+                ?.pop()
+                ?.split(' ')[1] ?? 'unknown';
+    } catch {
+        return 'unknown';
+    }
 }
 
 export const getBranch = async () => {
@@ -43,30 +47,34 @@ export const getBranch = async () => {
         return process.env.WORKERS_CI_BRANCH;
     }
 
-    return (await readGit('.git/HEAD'))
-            ?.replace(/^ref: refs\/heads\//, '')
-            ?.trim();
+    try {
+        return (await readGit('.git/HEAD'))
+                ?.replace(/^ref: refs\/heads\//, '')
+                ?.trim() ?? 'unknown';
+    } catch {
+        return 'unknown';
+    }
 }
 
 export const getRemote = async () => {
-    let remote = (await readGit('.git/config'))
-                    ?.split('\n')
-                    ?.find(line => line.includes('url = '))
-                    ?.split('url = ')[1];
+    try {
+        let remote = (await readGit('.git/config'))
+                        ?.split('\n')
+                        ?.find(line => line.includes('url = '))
+                        ?.split('url = ')[1];
 
-    if (remote?.startsWith('git@')) {
-        remote = remote.split(':')[1];
-    } else if (remote?.startsWith('http')) {
-        remote = new URL(remote).pathname.substring(1);
+        if (remote?.startsWith('git@')) {
+            remote = remote.split(':')[1];
+        } else if (remote?.startsWith('http')) {
+            remote = new URL(remote).pathname.substring(1);
+        }
+
+        remote = remote?.replace(/\.git$/, '');
+
+        return remote ?? 'unknown';
+    } catch {
+        return 'unknown';
     }
-
-    remote = remote?.replace(/\.git$/, '');
-
-    if (!remote) {
-        throw 'could not parse remote';
-    }
-
-    return remote;
 }
 
 export const getVersion = async () => {
