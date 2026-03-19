@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../speak"
+		},
+		{
+			"path": "../speak-media-upload-service"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {}
+}

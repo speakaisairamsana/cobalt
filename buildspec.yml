@@ -1,0 +1,34 @@
+version: 0.2
+
+env:
+  variables:
+    IMAGE_REPO_NAME: cobalt-api
+    IMAGE_TAG: latest
+
+phases:
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR..."
+      - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - ECR_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_URI
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_URI=$ECR_URI/$IMAGE_REPO_NAME
+  build:
+    commands:
+      - echo "Building Docker image..."
+      - docker build -f Dockerfile.eb -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $IMAGE_URI:$IMAGE_TAG
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $IMAGE_URI:$COMMIT_HASH
+  post_build:
+    commands:
+      - echo "Pushing Docker image to ECR..."
+      - docker push $IMAGE_URI:$IMAGE_TAG
+      - docker push $IMAGE_URI:$COMMIT_HASH
+      - echo "Generating Dockerrun.aws.json..."
+      - printf '{"AWSEBDockerrunVersion":"1","Image":{"Name":"%s","Update":"true"},"Ports":[{"ContainerPort":9000,"HostPort":80}]}' $IMAGE_URI:$IMAGE_TAG > Dockerrun.aws.json
+
+artifacts:
+  files:
+    - Dockerrun.aws.json
+    - .ebextensions/**/*

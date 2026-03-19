@@ -1,0 +1,5 @@
+web/
+docs/
+.github/
+*.md
+node_modules/
