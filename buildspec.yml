@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    IMAGE_REPO_NAME: cobalt-api
+    IMAGE_REPO_NAME: speak-cobalt-server
     IMAGE_TAG: latest
 
 phases:
