@@ -41,7 +41,7 @@
     // IMPORTANT: cobalt builds its tunnel URLs from API_URL, so this MUST be the
     // PUBLIC URL of this Worker. After the first deploy, set it to your
     // workers.dev URL (or custom domain) and redeploy. Keep the trailing slash.
-    "COBALT_PUBLIC_URL": "https://speak-cobalt.REPLACE_ME.workers.dev/"
+    "COBALT_PUBLIC_URL": "https://speak-cobalt.accounts-8b3.workers.dev/"
   },
 
   "observability": { "enabled": true }
