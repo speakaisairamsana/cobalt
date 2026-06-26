@@ -18,10 +18,12 @@
       // because the Dockerfile does `COPY . /app`. Defaults to the Dockerfile's
       // directory, but set explicitly so it's unambiguous in CI.
       "image_build_context": "..",
-      // standard-1 ≈ 4 GiB / 0.5 vCPU — matches the current Fargate CPU (512)
-      // and gives ffmpeg/media processing room. Drop to "basic" to cut cost.
-      "instance_type": "standard-1",
-      // Scale-to-zero when idle; cap concurrent instances to bound spend.
+      // basic ≈ 1 GiB / 0.25 vCPU — same memory as the old Fargate task (1 GB),
+      // cost-optimal for an idle-most-of-the-day resolver. Bump to "standard-1"
+      // (4 GiB / 0.5 vCPU) if in-container ffmpeg merges are too slow.
+      "instance_type": "basic",
+      // Scale-to-zero when idle (sleepAfter in src/index.ts); cap concurrent
+      // instances to bound spend.
       "max_instances": 5
     }
   ],
