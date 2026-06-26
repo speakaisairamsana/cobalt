@@ -11,7 +11,46 @@ speak-server ──POST /──► Worker (auth gate) ──► Container (cobal
   COBALT_API_URL                                 built from ../Dockerfile
 ```
 
-## Prerequisites
+## Deploy options
+
+- **GitHub Actions (recommended, no local Docker)** — `.github/workflows/deploy-cobalt-cloudflare.yml`
+  builds the image and deploys on every push to `feat/cloudflare-containers-deploy`. See
+  [GitHub Actions deploy](#github-actions-deploy-recommended) below. Cloudflare's
+  native "Workers Builds" Git integration does **not** reliably build container
+  images, which is why we use Actions (the runner has Docker).
+- **Local** — run `wrangler deploy` yourself; needs Docker running locally. See
+  [Manual / local deploy](#manual--local-deploy).
+
+## GitHub Actions deploy (recommended)
+
+The workflow runs `wrangler deploy` on an `ubuntu-latest` runner (Docker is
+preinstalled), which builds `../Dockerfile`, pushes the image to Cloudflare's
+registry, and deploys the Worker + container.
+
+**One-time setup:**
+
+1. Create a Cloudflare API token: dashboard → **My Profile → API Tokens →
+   Create Token → "Edit Cloudflare Workers"** template. If the container image
+   push fails on permissions, edit the token and add **Account → Containers → Edit**
+   (and **Account → Workers Scripts → Edit**).
+2. Find your **Account ID**: dashboard → Workers & Pages → right sidebar.
+3. Add both as GitHub repo secrets (repo → **Settings → Secrets and variables →
+   Actions → New repository secret**):
+   - `CLOUDFLARE_API_TOKEN`
+   - `CLOUDFLARE_ACCOUNT_ID`
+4. (Optional auth gate) After the first deploy, set the API key as a Worker
+   secret so the endpoint isn't open — see [Configure](#configure).
+5. Push to the branch (or run the workflow manually from the **Actions** tab).
+   The first container build takes a few minutes.
+
+After the first successful deploy, grab the `*.workers.dev` URL from the run
+logs (or the dashboard), set `COBALT_PUBLIC_URL` in `wrangler.jsonc`, and push
+again so cobalt's tunnel links resolve. Then wire speak-server
+([Point speak-server at it](#point-speak-server-at-it)).
+
+## Manual / local deploy
+
+### Prerequisites
 
 - A Cloudflare account with **Containers** enabled (Workers Paid plan).
 - [Docker](https://www.docker.com/) running locally — Wrangler uses it to build the image.

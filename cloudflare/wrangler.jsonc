@@ -14,6 +14,10 @@
     {
       "class_name": "CobaltContainer",
       "image": "../Dockerfile",
+      // Build context = repo root (where pnpm-workspace.yaml + the lockfile live),
+      // because the Dockerfile does `COPY . /app`. Defaults to the Dockerfile's
+      // directory, but set explicitly so it's unambiguous in CI.
+      "image_build_context": "..",
       // standard ≈ 4 GiB / 0.5 vCPU — matches the current Fargate CPU (512)
       // and gives ffmpeg/media processing room. Drop to "basic" to cut cost.
       "instance_type": "standard",
