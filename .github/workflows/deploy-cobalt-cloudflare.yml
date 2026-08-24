@@ -35,9 +35,16 @@ jobs:
         with:
           node-version: 20
 
+      # `npm ci` installs from the committed lockfile. `npm install` re-resolved the floating
+      # carets on every run, which is how the tooling drifted into an unsatisfiable peer
+      # dependency between wrangler and @cloudflare/workers-types and broke this job.
       - name: Install deploy tooling
         working-directory: cloudflare
-        run: npm install
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: cloudflare
+        run: npm run typecheck
 
       # wrangler builds the image from ../Dockerfile (context = repo root),
       # pushes it to Cloudflare's registry, then deploys the Worker + container.
