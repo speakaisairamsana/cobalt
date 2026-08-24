@@ -1,0 +1,50 @@
+{
+  // Cloudflare Containers deployment for the cobalt API.
+  // Docs: https://developers.cloudflare.com/containers/
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "speak-cobalt",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-06-01",
+
+  // The container image is built from the cobalt Dockerfile at the repo root.
+  // The Dockerfile does `COPY . /app`, so the build context must be the repo
+  // root (the directory that holds pnpm-workspace.yaml + pnpm-lock.yaml).
+  // Wrangler uses the directory containing the Dockerfile as the build context.
+  "containers": [
+    {
+      "class_name": "CobaltContainer",
+      "image": "../Dockerfile",
+      // Build context = repo root (where pnpm-workspace.yaml + the lockfile live),
+      // because the Dockerfile does `COPY . /app`. Defaults to the Dockerfile's
+      // directory, but set explicitly so it's unambiguous in CI.
+      "image_build_context": "..",
+      // basic ≈ 1 GiB / 0.25 vCPU — same memory as the old Fargate task (1 GB),
+      // cost-optimal for an idle-most-of-the-day resolver. Bump to "standard-1"
+      // (4 GiB / 0.5 vCPU) if in-container ffmpeg merges are too slow.
+      "instance_type": "basic",
+      // Scale-to-zero when idle (sleepAfter in src/index.ts); cap concurrent
+      // instances to bound spend.
+      "max_instances": 5
+    }
+  ],
+
+  // Containers are driven by a Durable Object class.
+  "durable_objects": {
+    "bindings": [
+      { "class_name": "CobaltContainer", "name": "COBALT_CONTAINER" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["CobaltContainer"] }
+  ],
+
+  // Public-facing values (safe to commit). Secrets go via `wrangler secret put`.
+  "vars": {
+    // IMPORTANT: cobalt builds its tunnel URLs from API_URL, so this MUST be the
+    // PUBLIC URL of this Worker. After the first deploy, set it to your
+    // workers.dev URL (or custom domain) and redeploy. Keep the trailing slash.
+    "COBALT_PUBLIC_URL": "https://speak-cobalt.accounts-8b3.workers.dev/"
+  },
+
+  "observability": { "enabled": true }
+}

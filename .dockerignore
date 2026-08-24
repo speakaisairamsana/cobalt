@@ -19,3 +19,6 @@ docker-compose.yml
 
 # ide
 .vscode
+
+# cloudflare containers deploy (not needed inside the image)
+cloudflare

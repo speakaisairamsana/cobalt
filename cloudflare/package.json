@@ -1,0 +1,18 @@
+{
+  "name": "speak-cobalt-cloudflare",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Containers deployment for the cobalt API",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "logs": "wrangler tail"
+  },
+  "devDependencies": {
+    "@cloudflare/containers": "0.0.x",
+    "@cloudflare/workers-types": "^5.20260804.1",
+    "typescript": "^5.5.0",
+    "wrangler": "^4.20.0"
+  }
+}

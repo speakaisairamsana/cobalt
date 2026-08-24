@@ -1,0 +1,56 @@
+name: Deploy cobalt to Cloudflare Containers
+
+# Builds the cobalt image from the root Dockerfile and deploys it as a
+# Cloudflare Container (Worker + Durable Object) on every push to the deploy
+# branch. The ubuntu-latest runner has Docker available, which wrangler uses to
+# build and push the container image to Cloudflare's managed registry.
+
+on:
+  push:
+    branches:
+      - feat/cloudflare-containers-deploy
+    paths:
+      - cloudflare/**
+      - api/**
+      - packages/**
+      - Dockerfile
+      - pnpm-lock.yaml
+      - .github/workflows/deploy-cobalt-cloudflare.yml
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-cobalt-cloudflare
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build image and deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # `npm ci` installs from the committed lockfile. `npm install` re-resolved the floating
+      # carets on every run, which is how the tooling drifted into an unsatisfiable peer
+      # dependency between wrangler and @cloudflare/workers-types and broke this job.
+      - name: Install deploy tooling
+        working-directory: cloudflare
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: cloudflare
+        run: npm run typecheck
+
+      # wrangler builds the image from ../Dockerfile (context = repo root),
+      # pushes it to Cloudflare's registry, then deploys the Worker + container.
+      - name: Deploy
+        working-directory: cloudflare
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
