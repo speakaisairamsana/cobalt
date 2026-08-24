@@ -33,7 +33,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       # `npm ci` installs from the committed lockfile. `npm install` re-resolved the floating
       # carets on every run, which is how the tooling drifted into an unsatisfiable peer
